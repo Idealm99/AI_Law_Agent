@@ -12,6 +12,17 @@ class tool_class:
         self.searching_tavily=retrievals.web_retrievers()
 
     @tool
+    def get_law_data(query: str):
+        """
+        특정 법률의 특정 조항에 대한 정보를 검색합니다.
+
+        Args:
+            query (str): 어떤 법률 조항을 검색할지 구분합니다. 
+            (근로기준법 : personal_law , 개인정보보호법: labor_law, 주택임대차보호법: housing_law)
+            
+        """
+
+    @tool
     def personal_law_search(self,query: str) -> List[Document]:
         """개인정보보호법 법률 조항을 검색합니다."""
         docs = self.searching_chroma('personal_law',query)

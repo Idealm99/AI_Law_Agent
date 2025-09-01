@@ -2,10 +2,12 @@ from model.tools.langchain_tools import tool_class
 from langchain_openai import ChatOpenAI
 from pprint import pprint
 from langchain_core.tools import tool
-
+from schemas.schema import InformationStrip
+from schemas.schema import pt
 class openai :
     def __init__(self):
         self.llm = ChatOpenAI(model="gpt-4o-mini", temperature=0, streaming=True)
+        # self.select_llm=self.llm.bind_tools()
         self.personal_law_search=tool_class.personal_law_search()
         self.labor_law_search =tool_class.labor_law_search()
         self.housing_law_search = tool_class.housing_law_search()
@@ -13,15 +15,25 @@ class openai :
         self.llm_with_tools = self.llm.bind_tools([self.personal_law_search, self.labor_law_search, self.housing_law_search, self.web_search])
 
     def invoke(self,query):
-        ai_msg = self.llm_with_tools.invoke(query)
-        pprint(ai_msg)
-        print("-" * 100)
+        
+    
+    
+    
+        self.llm.with_structured_output(InformationStrip)
+        response = self.llm.invoke(pt(
+            query=query
+            
+        ))
+        print(response)
+        # ai_msg=self.llm_with_tools.invoke(query)
+        # pprint(ai_msg)
+        # print("-" * 100)
 
-        pprint(ai_msg.content)
-        print("-" * 100)
+        # pprint(ai_msg.content)
+        # print("-" * 100)
 
-        pprint(ai_msg.tool_calls)
-        print("-" * 100)
+        # pprint(ai_msg.tool_calls)
+        # print("-" * 100)
 
 
 # 사용 예시
