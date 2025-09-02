@@ -5,11 +5,24 @@ from typing import List, TypedDict, Annotated, Optional
 from operator import add
 from langchain_core.documents import Document
 
+
+
+class RagState(TypedDict):
+    question: str
+    document_content: List[Document]
+
+
+class answerState(TypedDict):
+    question: str
+    extracted_info: str
+
+
 class CorrectiveRagState(TypedDict):
     question: str                 # 사용자의 질문
     generation: str               # LLM 생성 답변
     documents: List[Document]     # 컨텍스트 문서 (검색된 문서)
     num_generations: int          # 질문 or 답변 생성 횟수 (무한 루프 방지에 활용)
+
 
 class InformationStrip(BaseModel):
     """추출된 정보에 대한 내용과 출처, 관련성 점수"""
@@ -32,3 +45,19 @@ class PersonalRagState(CorrectiveRagState):
     rewritten_query: str   # 재작성한 질문 
     extracted_info: Optional[ExtractedInformation]   # 추출된 정보 조각 
     node_answer: Optional[str]
+
+
+# 웹 검색 도구 
+class SearchRagState(CorrectiveRagState):
+    rewritten_query: str   # 재작성한 질문 
+    extracted_info: Optional[ExtractedInformation]   # 추출된 정보 조각 
+    node_answer: Optional[str] 
+
+# 메인 그래프 상태 정의
+class ResearchAgentState(TypedDict):
+    question: str
+    answers: Annotated[List[str], add]
+    final_answer: str
+    datasources: List[str]
+    evaluation_report: Optional[dict]
+    user_decision: Optional[str]

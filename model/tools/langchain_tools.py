@@ -24,7 +24,9 @@ class tool_class:
 
     @tool
     def personal_law_search(self,query: str) -> List[Document]:
-        """개인정보보호법 법률 조항을 검색합니다."""
+        """
+        개인정보보호법 법률 조항을 검색합니다.
+        """
         docs = self.searching_chroma('personal_law',query)
 
         if len(docs) > 0:
@@ -34,7 +36,9 @@ class tool_class:
 
     @tool
     def labor_law_search(self,query: str) -> List[Document]:
-        """근로기준법 법률 조항을 검색합니다."""
+        """
+        근로기준법 법률 조항을 검색합니다.
+        """
         docs = self.searching_chroma('labor_law',query)
 
         if len(docs) > 0:
@@ -45,7 +49,9 @@ class tool_class:
 
     @tool
     def housing_law_search(self,query: str) -> List[Document]:
-        """주택임대차보호법 법률 조항을 검색합니다."""
+        """
+        주택임대차보호법 법률 조항을 검색합니다.
+        """
         docs = self.searching_chroma('housing_law',query)
 
         if len(docs) > 0:
@@ -56,7 +62,9 @@ class tool_class:
 
     @tool
     def web_search(self,query: str) -> List[str]:
-    
+        """
+        없다면 테빌리를 이용하여 법률 조항을 검색합니다.
+        """
 
         docs = self.searching_tavily(query)
 

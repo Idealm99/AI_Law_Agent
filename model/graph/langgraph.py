@@ -1,8 +1,9 @@
 from langgraph.graph import StateGraph, START, END
 from IPython.display import Image, display
-
+from schemas.schema import SearchRagState
+from model.graph.nodes import retrieve_documents, extract_and_evaluate_information, rewrite_query, generate_node_answer, should_continue
 # 그래프 생성
-workflow = StateGraph(PersonalRagState)
+workflow = StateGraph(SearchRagState)
 
 # 노드 추가
 workflow.add_node("retrieve", retrieve_documents)
@@ -28,7 +29,5 @@ workflow.add_edge("rewrite_query", "retrieve")
 workflow.add_edge("generate_answer", END)
 
 # 그래프 컴파일
-personal_law_agent = workflow.compile()
+search_web_agent = workflow.compile()
 
-# 그래프 시각화
-display(Image(personal_law_agent.get_graph().draw_mermaid_png()))
