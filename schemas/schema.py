@@ -1,63 +1,83 @@
+# schemas/schema.py
 
-
-from pydantic import BaseModel, Field
 from typing import List, TypedDict, Annotated, Optional
-from operator import add
 from langchain_core.documents import Document
+from pydantic import BaseModel, Field
 
-
-
-class RagState(TypedDict):
-    question: str
-    document_content: List[Document]
-
-
-class answerState(TypedDict):
-    question: str
-    extracted_info: str
-
+# --- Corrective RAG 에이전트 상태 정의 ---
 
 class CorrectiveRagState(TypedDict):
-    question: str                 # 사용자의 질문
-    generation: str               # LLM 생성 답변
-    documents: List[Document]     # 컨텍스트 문서 (검색된 문서)
-    num_generations: int          # 질문 or 답변 생성 횟수 (무한 루프 방지에 활용)
-
+    """Corrective RAG의 기본 상태"""
+    question: str
+    generation: str
+    documents: List[Document]
+    num_generations: int
 
 class InformationStrip(BaseModel):
-    """추출된 정보에 대한 내용과 출처, 관련성 점수"""
+    """추출된 정보 조각의 내용, 출처, 관련성 점수"""
     content: str = Field(..., description="추출된 정보 내용")
-    source: str = Field(..., description="정보의 출처(법률 조항 또는 URL 등). 예시: 환경법 제22조 3항 or 블로그 환경법 개정 (https://blog.com/page/123)")
-    relevance_score: float = Field(..., ge=0, le=1, description="관련성 점수 (0에서 1 사이)")
-    faithfulness_score: float = Field(..., ge=0, le=1, description="충실성 점수 (0에서 1 사이)")
+    source: str = Field(..., description="정보의 출처(법률 조항 또는 URL 등)")
+    relevance_score: float = Field(..., ge=0, le=1, description="질의에 대한 관련성 점수 (0에서 1 사이)")
+    faithfulness_score: float = Field(..., ge=0, le=1, description="답변의 충실성 점수 (0에서 1 사이)")
 
 class ExtractedInformation(BaseModel):
+    """추출된 정보 조각들과 전반적인 답변 가능성 점수"""
     strips: List[InformationStrip] = Field(..., description="추출된 정보 조각들")
-    query_relevance: float = Field(..., ge=0, le=1, description="질의에 대한 전반전인 답변 가능성 점수 (0에서 1 사이)")
+    query_relevance: float = Field(..., ge=0, le=1, description="질의에 대한 전반적인 답변 가능성 점수 (0에서 1 사이)")
 
 class RefinedQuestion(BaseModel):
-    """개선된 질문과 이유"""
-    question_refined : str = Field(..., description="개선된 질문")
-    reason : str = Field(..., description="이유")
+    """개선된 질문과 그 이유"""
+    question_refined: str = Field(..., description="개선된 질문")
+    reason: str = Field(..., description="이유")
 
-# 개인정보보호법
+# --- 각 법률 및 웹 검색 에이전트 상태 정의 ---
+
 class PersonalRagState(CorrectiveRagState):
-    rewritten_query: str   # 재작성한 질문 
-    extracted_info: Optional[ExtractedInformation]   # 추출된 정보 조각 
+    """개인정보보호법 RAG 에이전트 상태"""
+    rewritten_query: str
+    extracted_info: Optional[List[InformationStrip]]
     node_answer: Optional[str]
 
+class LaborRagState(CorrectiveRagState):
+    """근로기준법 RAG 에이전트 상태"""
+    rewritten_query: str
+    extracted_info: Optional[List[InformationStrip]]
+    node_answer: Optional[str]
 
-# 웹 검색 도구 
+class HousingRagState(CorrectiveRagState):
+    """주택임대차보호법 RAG 에이전트 상태"""
+    rewritten_query: str
+    extracted_info: Optional[List[InformationStrip]]
+    node_answer: Optional[str]
+
 class SearchRagState(CorrectiveRagState):
-    rewritten_query: str   # 재작성한 질문 
-    extracted_info: Optional[ExtractedInformation]   # 추출된 정보 조각 
-    node_answer: Optional[str] 
+    """웹 검색 RAG 에이전트 상태"""
+    rewritten_query: str
+    extracted_info: Optional[List[InformationStrip]]
+    node_answer: Optional[str]
 
-# 메인 그래프 상태 정의
+# --- 메인 그래프(Supervisor) 상태 정의 ---
+
 class ResearchAgentState(TypedDict):
+    """메인 에이전트의 상태"""
     question: str
-    answers: Annotated[List[str], add]
+    answers: Annotated[List[str], lambda x, y: x + y]
     final_answer: str
     datasources: List[str]
     evaluation_report: Optional[dict]
     user_decision: Optional[str]
+
+# --- 라우팅을 위한 데이터 모델 ---
+
+class ToolSelector(BaseModel):
+    """사용자 질문에 가장 적합한 도구를 선택합니다."""
+    tool: str = Field(
+        description="사용자 질문에 따라 도구 중 하나를 선택합니다.",
+        enum=["search_personal", "search_labor", "search_housing", "search_web"]
+    )
+
+class ToolSelectors(BaseModel):
+    """사용자 질문에 적합한 도구들을 선택합니다."""
+    tools: List[ToolSelector] = Field(
+        description="사용자 질문에 따라 하나 이상의 도구를 선택합니다.",
+    )
